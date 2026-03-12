@@ -22,9 +22,9 @@ COPY package.json ./
 RUN yarn install --production --frozen-lockfile
 
 COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/prisma ./prisma
 COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
 COPY prisma ./prisma/
+COPY tsconfig.json ./
 
 ENV NODE_ENV=production
 
