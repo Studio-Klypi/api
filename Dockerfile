@@ -16,4 +16,4 @@ COPY . .
 
 ENV NODE_ENV=production
 
-CMD npx prisma migrate deploy && yarn start
+CMD npx prisma migrate deploy && npx nest start
