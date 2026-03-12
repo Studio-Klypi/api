@@ -13,4 +13,4 @@ RUN yarn build
 
 ENV NODE_ENV=production
 
-CMD npx prisma migrate deploy && node dist/main
+CMD npx prisma migrate deploy && node dist/src/main.js
