@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// PROJECTS \\
+enum ProjectStatus {
+  draft
+  published
+  archived
+}
+
+enum ProjectVisibility {
+  public
+  private
+}
+
+model Project {
+  id          Int               @id @default(autoincrement())
+  slug        String
+  title       String
+  description String
+  banner      String?
+  status      ProjectStatus     @default(draft)
+  visibility  ProjectVisibility @default(private)
+  createdAt   DateTime          @default(now())
+  updatedAt   DateTime          @updatedAt
+  archivedAt  DateTime?
+
+  @@unique([id, slug])
+  @@map("projects")
+}
