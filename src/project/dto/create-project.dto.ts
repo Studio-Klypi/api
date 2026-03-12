@@ -2,6 +2,7 @@ import * as primitives from '../../types/primitives';
 import { ProjectStatus, ProjectVisibility } from '@prisma/client';
 import {
   IsEnum,
+  IsJSON,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -30,4 +31,8 @@ export class CreateProjectDto {
   @IsOptional()
   @IsEnum(ProjectVisibility)
   visibility?: ProjectVisibility;
+
+  @IsOptional()
+  @IsJSON()
+  sections?: unknown;
 }
