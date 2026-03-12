@@ -2,6 +2,8 @@ FROM node:22-alpine
 
 WORKDIR /app
 
+RUN npm i -g @nest/cli
+
 COPY yarn.lock ./
 COPY package.json ./
 COPY tsconfig.json ./
