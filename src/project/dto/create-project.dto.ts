@@ -1,5 +1,5 @@
 import * as primitives from '../../types/primitives';
-import { ProjectStatus, ProjectVisibility } from '@prisma/client';
+import { Prisma, ProjectStatus, ProjectVisibility } from '@prisma/client';
 import {
   IsEnum,
   IsJSON,
@@ -34,5 +34,5 @@ export class CreateProjectDto {
 
   @IsOptional()
   @IsJSON()
-  sections?: unknown;
+  sections?: Prisma.InputJsonArray;
 }
