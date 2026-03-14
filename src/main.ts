@@ -10,7 +10,7 @@ async function bootstrap() {
   app.use(helmet());
 
   app.enableCors({
-    origin: (origin, callback) => {
+    origin: (origin: string, callback: (...args: any) => void) => {
       if (
         !origin ||
         /^http:\/\/localhost(:\d+)?$/.test(origin) ||
