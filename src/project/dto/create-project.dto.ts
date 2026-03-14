@@ -1,8 +1,8 @@
 import * as primitives from '../../types/primitives';
 import { Prisma, ProjectStatus, ProjectVisibility } from '@prisma/client';
 import {
+  IsArray,
   IsEnum,
-  IsJSON,
   IsNotEmpty,
   IsOptional,
   IsString,
@@ -33,6 +33,6 @@ export class CreateProjectDto {
   visibility?: ProjectVisibility;
 
   @IsOptional()
-  @IsJSON()
+  @IsArray()
   sections?: Prisma.InputJsonArray;
 }

@@ -8,6 +8,7 @@ export class ProjectEntity {
   banner: Nullable<string>;
   status: string;
   visibility: string;
+  sections: any;
   createdAt: Date;
   updatedAt: Date;
   archivedAt: Nullable<Date>;

@@ -8,9 +8,20 @@ import { ProjectEntity } from './entities/project.entity';
 export class ProjectService {
   constructor(private readonly db: DatabaseService) {}
 
-  async findAll() {
-    const projects = await this.db.project.findMany();
-    return projects.map((project) => new ProjectEntity(project));
+  async findAll(page: number = 1, offset: number = 20) {
+    const total = await this.db.project.count();
+    const projects = await this.db.project.findMany({
+      skip: (page - 1) * offset,
+      take: offset,
+    });
+
+    return {
+      data: projects.map((project) => new ProjectEntity(project)),
+      meta: {
+        total,
+        count: projects.length,
+      },
+    };
   }
   async findOne(_slug: string) {
     const [id, ...slug] = _slug.split('-');

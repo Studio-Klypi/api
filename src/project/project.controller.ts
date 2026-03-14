@@ -9,6 +9,7 @@ import {
   Delete,
   ParseIntPipe,
   UseGuards,
+  Query,
 } from '@nestjs/common';
 import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
@@ -20,8 +21,8 @@ export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
 
   @Get()
-  recoverList() {
-    return this.projectService.findAll();
+  recoverList(@Query('page') page?: number, @Query('offset') offset?: number) {
+    return this.projectService.findAll(page, offset);
   }
 
   @Get(':slug')
