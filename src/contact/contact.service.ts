@@ -4,10 +4,14 @@ import type { Prisma, ContactType } from '@prisma/client';
 import { CreateContactDto } from './dto/create-contact.dto';
 import { ContactEntity } from './entities/contact.entity';
 import { ReplyDto } from './dto/reply.dto';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class ContactService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly mailer: MailerService,
+  ) {}
 
   async findAll(
     sort: Prisma.ContactOrderByWithRelationInput[],
@@ -56,15 +60,27 @@ export class ContactService {
     const contact = await this.db.contact.create({
       data: payload,
     });
+    await this.mailer
+      .sendMail({
+        to: payload.email,
+        subject: 'Nous avons bien recu votre message',
+        template: 'contact-confirmation',
+        context: {
+          firstName: payload.firstName,
+          subject: payload.subject,
+          message: payload.message,
+          year: new Date().getFullYear(),
+        },
+      })
+      .catch();
     return admin ? contact : new ContactEntity(contact);
   }
 
   async reply(id: number, payload: ReplyDto) {
     if (await this.isProcessed(id))
       throw new ConflictException("Can't reply to already processed message.");
-    // TODO: send email - loic
-    console.log(payload.message);
-    return this.db.contact.update({
+
+    const message = await this.db.contact.update({
       where: {
         id,
         processedAt: null,
@@ -73,6 +89,19 @@ export class ContactService {
         processedAt: new Date(),
       },
     });
+    await this.mailer.sendMail({
+      to: message.email,
+      subject: `Re: ${message.subject}`,
+      replyTo: process.env.MAILER_REPLY_TO,
+      template: 'reply-message',
+      context: {
+        firstName: message.firstName,
+        message: payload.message,
+        year: new Date().getFullYear(),
+      },
+    });
+
+    return message;
   }
 
   private async isProcessed(id: number): Promise<boolean> {
