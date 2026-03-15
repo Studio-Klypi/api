@@ -13,7 +13,6 @@ import { TestimonialService } from './testimonial.service';
 import { IsAdmin } from '../common/decorators/is-admin.decorator';
 import { CreateTestimonialDto } from './dto/create-testimonial.dto';
 import { AdminGuard } from '../common/guards/admin.guard';
-import type { Prisma } from '@prisma/client';
 import { compileSort } from '../lib/sort';
 
 @Controller('testimonials')
