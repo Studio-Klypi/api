@@ -13,7 +13,7 @@ import { TestimonialService } from './testimonial.service';
 import { IsAdmin } from '../common/decorators/is-admin.decorator';
 import { CreateTestimonialDto } from './dto/create-testimonial.dto';
 import { AdminGuard } from '../common/guards/admin.guard';
-import type { Prisma } from '@prisma/client';
+import { compileSort } from '../lib/sort';
 
 @Controller('testimonials')
 export class TestimonialController {
@@ -27,14 +27,13 @@ export class TestimonialController {
     @Query('offset') offset?: number,
     @IsAdmin() admin?: boolean,
   ) {
-    const items = sort?.split(',') ?? [];
-    const sorting = items.reduce((acc, item) => {
-      const sortOrder = item.startsWith('-') ? 'desc' : 'asc';
-      acc = [...acc, { [item.replace('-', '')]: sortOrder }];
-      return acc;
-    }, [] as Prisma.TestimonialOrderByWithRelationInput[]);
-
-    return this.service.findAll(sorting, search, page, offset, admin);
+    return this.service.findAll(
+      compileSort(sort ?? ''),
+      search,
+      page,
+      offset,
+      admin,
+    );
   }
 
   @Post()
