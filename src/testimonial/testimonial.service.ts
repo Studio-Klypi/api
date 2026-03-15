@@ -3,10 +3,14 @@ import { DatabaseService } from '../common/database/database.service';
 import { TestimonialEntity } from './entities/testimonial.entity';
 import { CreateTestimonialDto } from './dto/create-testimonial.dto';
 import { type Prisma } from '@prisma/client';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class TestimonialService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly mailer: MailerService,
+  ) {}
 
   async findAll(
     sorting: Prisma.TestimonialOrderByWithRelationInput[],
@@ -52,7 +56,20 @@ export class TestimonialService {
     const testimonial = await this.db.testimonial.create({
       data: payload,
     });
-
+    await this.mailer
+      .sendMail({
+        to: payload.email,
+        subject: 'Merci pour votre témoignage',
+        template: 'testimonial-confirmation',
+        context: {
+          firstName: payload.firstName,
+          lastName: payload.lastName,
+          role: payload.role,
+          text: payload.text,
+          year: new Date().getFullYear(),
+        },
+      })
+      .catch();
     return admin ? testimonial : new TestimonialEntity(testimonial);
   }
 
