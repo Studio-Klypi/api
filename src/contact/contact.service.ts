@@ -59,13 +59,14 @@ export class ContactService {
     return admin ? contact : new ContactEntity(contact);
   }
 
-  async reply(payload: ReplyDto) {
-    if (await this.isProcessed(payload.replyTo))
+  async reply(id: number, payload: ReplyDto) {
+    if (await this.isProcessed(id))
       throw new ConflictException("Can't reply to already processed message.");
     // TODO: send email - loic
+    console.log(payload.message);
     return this.db.contact.update({
       where: {
-        id: payload.replyTo,
+        id,
         processedAt: null,
       },
       data: {

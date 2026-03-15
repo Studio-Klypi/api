@@ -1,4 +1,13 @@
-import { Body, Controller, Get, Post, Query, UseGuards } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Param,
+  ParseIntPipe,
+  Post,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { ContactService } from './contact.service';
 import { AdminGuard } from '../common/guards/admin.guard';
 import { compileSort } from '../lib/sort';
@@ -18,8 +27,8 @@ export class ContactController {
     @Query('sort') sort?: string,
     @Query('search') search?: string,
     @Query('typeFilter') typeFilter?: string,
-    @Query('page') page?: number,
-    @Query('offset') offset?: number,
+    @Query('page', new ParseIntPipe({ optional: true })) page?: number,
+    @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
   ) {
     return this.service.findAll(
       compileSort(sort ?? ''),
@@ -35,9 +44,9 @@ export class ContactController {
     return this.service.create(body, admin);
   }
 
-  @Post('reply')
+  @Post(':id/reply')
   @UseGuards(new AdminGuard())
-  async reply(@Body() body: ReplyDto) {
-    return this.service.reply(body);
+  async reply(@Param('id', ParseIntPipe) id: number, @Body() body: ReplyDto) {
+    return this.service.reply(id, body);
   }
 }

@@ -23,8 +23,8 @@ export class TestimonialController {
   findAll(
     @Query('sort') sort?: string,
     @Query('search') search?: string,
-    @Query('page') page?: number,
-    @Query('offset') offset?: number,
+    @Query('page', new ParseIntPipe({ optional: true })) page?: number,
+    @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
     @IsAdmin() admin?: boolean,
   ) {
     return this.service.findAll(

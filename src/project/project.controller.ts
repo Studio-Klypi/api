@@ -21,7 +21,10 @@ export class ProjectController {
   constructor(private readonly projectService: ProjectService) {}
 
   @Get()
-  recoverList(@Query('page') page?: number, @Query('offset') offset?: number) {
+  recoverList(
+    @Query('page', new ParseIntPipe({ optional: true })) page?: number,
+    @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
+  ) {
     return this.projectService.findAll(page, offset);
   }
 
