@@ -34,3 +34,40 @@ model Project {
   @@unique([id, slug])
   @@map("projects")
 }
+
+// CONTACT \\
+model Testimonial {
+  id          Int       @id @default(autoincrement())
+  firstName   String
+  lastName    String
+  avatar      String?
+  email       String
+  role        String?
+  text        String
+  createdAt   DateTime  @default(now())
+  verifiedAt  DateTime?
+  processedAt DateTime?
+
+  @@map("testimonials")
+}
+
+enum ContactType {
+  contact
+  quote
+  partnership
+  sponsoring
+}
+
+model Contact {
+  id          Int         @id @default(autoincrement())
+  firstName   String
+  lastName    String
+  email       String
+  type        ContactType @default(contact)
+  subject     String
+  message     String
+  createdAt   DateTime    @default(now())
+  processedAt DateTime?
+
+  @@map("contacts")
+}
