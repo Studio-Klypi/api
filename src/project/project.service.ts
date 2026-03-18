@@ -3,14 +3,33 @@ import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { DatabaseService } from '../common/database/database.service';
 import { ProjectEntity } from './entities/project.entity';
+import type { Prisma } from '@prisma/client';
 
 @Injectable()
 export class ProjectService {
   constructor(private readonly db: DatabaseService) {}
 
-  async findAll(page: number = 1, offset: number = 20) {
-    const total = await this.db.project.count();
+  async findAll(
+    sort: Prisma.ProjectOrderByWithRelationInput[],
+    search?: string,
+    page: number = 1,
+    offset: number = 20,
+  ) {
+    let where = {};
+    if (search && search.length > 0)
+      where = {
+        ...where,
+        OR: [
+          { slug: { contains: search, mode: 'insensitive' } },
+          { title: { contains: search, mode: 'insensitive' } },
+          { description: { contains: search, mode: 'insensitive' } },
+        ],
+      };
+
+    const total = await this.db.project.count({ where });
     const projects = await this.db.project.findMany({
+      where,
+      orderBy: sort,
       skip: (page - 1) * offset,
       take: offset,
     });

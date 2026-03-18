@@ -15,6 +15,7 @@ import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { AdminGuard } from '../common/guards/admin.guard';
+import { compileSort } from '../lib/sort';
 
 @Controller('projects')
 export class ProjectController {
@@ -22,10 +23,17 @@ export class ProjectController {
 
   @Get()
   recoverList(
+    @Query('sort') sort?: string,
+    @Query('search') search?: string,
     @Query('page', new ParseIntPipe({ optional: true })) page?: number,
     @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
   ) {
-    return this.projectService.findAll(page, offset);
+    return this.projectService.findAll(
+      compileSort(sort ?? ''),
+      search,
+      page,
+      offset,
+    );
   }
 
   @Get(':slug')
