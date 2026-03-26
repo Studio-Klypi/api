@@ -25,7 +25,7 @@ import { SessionModule } from './authentication/session/session.module';
       },
       defaults: {
         from: `${process.env.MAILER_FROM_NAME} <${process.env.MAILER_FROM_EMAIL}>`,
-        replyTo: `${process.env.MAILER_REPLY_FROM_NAME} <${process.env.MAILER_REPLY_TO}>`,
+        replyTo: `${process.env.MAILER_FROM_NAME} <${process.env.MAILER_REPLY_TO}>`,
       },
       template: {
         dir: join(__dirname, 'templates'),
