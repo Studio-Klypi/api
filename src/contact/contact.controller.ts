@@ -16,13 +16,14 @@ import { CreateContactDto } from './dto/create-contact.dto';
 import { IsAdmin } from '../common/decorators/is-admin.decorator';
 import { ReplyDto } from './dto/reply.dto';
 import { compileFilter } from '../lib/filter';
+import { HasRoleGuard } from '../common/guards/has-role.guard';
 
 @Controller('contact/messages')
 export class ContactController {
   constructor(private readonly service: ContactService) {}
 
   @Get()
-  @UseGuards(new AdminGuard())
+  @UseGuards(HasRoleGuard('superadmin', 'admin', 'frontline'))
   async findAll(
     @Query('sort') sort?: string,
     @Query('search') search?: string,
@@ -45,7 +46,7 @@ export class ContactController {
   }
 
   @Post(':id/reply')
-  @UseGuards(new AdminGuard())
+  @UseGuards(HasRoleGuard('superadmin', 'admin', 'frontline'))
   async reply(@Param('id', ParseIntPipe) id: number, @Body() body: ReplyDto) {
     return this.service.reply(id, body);
   }

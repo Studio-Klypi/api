@@ -10,10 +10,13 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { TestimonialService } from './testimonial.service';
-import { IsAdmin } from '../common/decorators/is-admin.decorator';
 import { CreateTestimonialDto } from './dto/create-testimonial.dto';
-import { AdminGuard } from '../common/guards/admin.guard';
 import { compileSort } from '../lib/sort';
+import { GetUser } from '../common/decorators/get-user.decorator';
+import type { Nullable } from '../types/primitives';
+import { UserEntity } from '../authentication/user/entities/user.entity';
+import { UserRole } from '@prisma/client';
+import { HasRoleGuard } from '../common/guards/has-role.guard';
 
 @Controller('testimonials')
 export class TestimonialController {
@@ -21,34 +24,40 @@ export class TestimonialController {
 
   @Get()
   findAll(
+    @GetUser() me: Nullable<UserEntity>,
     @Query('sort') sort?: string,
     @Query('search') search?: string,
     @Query('page', new ParseIntPipe({ optional: true })) page?: number,
     @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
-    @IsAdmin() admin?: boolean,
   ) {
     return this.service.findAll(
       compileSort(sort ?? ''),
       search,
       page,
       offset,
-      admin,
+      !!me,
     );
   }
 
   @Post()
-  store(@Body() body: CreateTestimonialDto, @IsAdmin() admin?: boolean) {
-    return this.service.create(body, admin);
+  store(
+    @Body() body: CreateTestimonialDto,
+    @GetUser() me: Nullable<UserEntity>,
+  ) {
+    return this.service.create(
+      body,
+      me ? (['superadmin', 'admin'] as UserRole[]).includes(me?.role) : false,
+    );
   }
 
   @Patch(':id/accept')
-  @UseGuards(new AdminGuard())
+  @UseGuards(HasRoleGuard('superadmin', 'admin'))
   accept(@Param('id', ParseIntPipe) id: number) {
     return this.service.accept(id);
   }
 
   @Patch(':id/deny')
-  @UseGuards(new AdminGuard())
+  @UseGuards(HasRoleGuard('superadmin', 'admin'))
   deny(@Param('id', ParseIntPipe) id: number) {
     return this.service.deny(id);
   }
