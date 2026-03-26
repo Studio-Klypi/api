@@ -8,6 +8,9 @@ import { TestimonialModule } from './testimonial/testimonial.module';
 import { ContactModule } from './contact/contact.module';
 import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
+import { UserModule } from './authentication/user/user.module';
+import { SessionModule } from './authentication/session/session.module';
+import { AuthGuard } from './common/guards/auth.guard';
 
 @Module({
   imports: [
@@ -43,8 +46,10 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
     DatabaseModule,
     TestimonialModule,
     ContactModule,
+    UserModule,
+    SessionModule,
   ],
   controllers: [AppController],
-  providers: [AppService],
+  providers: [AppService, AuthGuard],
 })
 export class AppModule {}
