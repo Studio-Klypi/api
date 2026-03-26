@@ -29,7 +29,7 @@ export class SessionService {
       session!.sid,
       {
         httpOnly: true,
-        secure: true,
+        secure: process.env.ENVIRONMENT !== 'development',
         sameSite: 'lax',
         maxAge: 1000 * 60 * 60 * (data.keep ? 24 * 14 : 2),
       },
@@ -71,7 +71,7 @@ export class SessionService {
 
       res.clearCookie(process.env.BACKOFFICE_SESSION_COOKIE_NAME as string, {
         httpOnly: true,
-        secure: true,
+        secure: process.env.ENVIRONMENT !== 'development',
         sameSite: 'lax',
       });
 
