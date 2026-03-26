@@ -10,7 +10,6 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { UserModule } from './authentication/user/user.module';
 import { SessionModule } from './authentication/session/session.module';
-import { AuthGuard } from './common/guards/auth.guard';
 
 @Module({
   imports: [
@@ -50,6 +49,6 @@ import { AuthGuard } from './common/guards/auth.guard';
     SessionModule,
   ],
   controllers: [AppController],
-  providers: [AppService, AuthGuard],
+  providers: [AppService],
 })
 export class AppModule {}
