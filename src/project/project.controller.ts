@@ -14,8 +14,8 @@ import {
 import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
-import { AdminGuard } from '../common/guards/admin.guard';
 import { compileSort } from '../lib/sort';
+import { HasRoleGuard } from '../common/guards/has-role.guard';
 
 @Controller('projects')
 export class ProjectController {
@@ -42,13 +42,13 @@ export class ProjectController {
   }
 
   @Post()
-  @UseGuards(new AdminGuard())
+  @UseGuards(HasRoleGuard('superadmin', 'admin'))
   create(@Body() payload: CreateProjectDto) {
     return this.projectService.create(payload);
   }
 
   @Put(':id')
-  @UseGuards(new AdminGuard())
+  @UseGuards(HasRoleGuard('superadmin', 'admin'))
   update(
     @Param('id', ParseIntPipe) id: number,
     @Body() payload: UpdateProjectDto,
@@ -57,19 +57,19 @@ export class ProjectController {
   }
 
   @Patch(':id/publish')
-  @UseGuards(new AdminGuard())
+  @UseGuards(HasRoleGuard('superadmin', 'admin'))
   publish(@Param('id', ParseIntPipe) id: number) {
     return this.projectService.update(id, { status: 'published' });
   }
 
   @Patch(':id/unpublish')
-  @UseGuards(new AdminGuard())
+  @UseGuards(HasRoleGuard('superadmin', 'admin'))
   unpublish(@Param('id', ParseIntPipe) id: number) {
     return this.projectService.update(id, { status: 'draft' });
   }
 
   @Patch(':id/visibility')
-  @UseGuards(new AdminGuard())
+  @UseGuards(HasRoleGuard('superadmin', 'admin'))
   updateVisibility(
     @Param('id', ParseIntPipe) id: number,
     @Body() payload: UpdateProjectDto,
@@ -78,7 +78,7 @@ export class ProjectController {
   }
 
   @Delete(':id/archive')
-  @UseGuards(new AdminGuard())
+  @UseGuards(HasRoleGuard('superadmin', 'admin'))
   archive(@Param('id', ParseIntPipe) id: number) {
     return this.projectService.update(id, {
       status: 'archived',
@@ -87,7 +87,7 @@ export class ProjectController {
   }
 
   @Patch(':id/restore')
-  @UseGuards(new AdminGuard())
+  @UseGuards(HasRoleGuard('superadmin', 'admin'))
   restore(@Param('id', ParseIntPipe) id: number) {
     return this.projectService.update(id, {
       status: 'draft',
@@ -96,7 +96,7 @@ export class ProjectController {
   }
 
   @Delete(':id')
-  @UseGuards(new AdminGuard())
+  @UseGuards(HasRoleGuard('superadmin', 'admin'))
   delete(@Param('id', ParseIntPipe) id: number) {
     return this.projectService.delete(id);
   }
