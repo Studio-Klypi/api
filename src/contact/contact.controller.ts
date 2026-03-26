@@ -9,7 +9,6 @@ import {
   UseGuards,
 } from '@nestjs/common';
 import { ContactService } from './contact.service';
-import { AdminGuard } from '../common/guards/admin.guard';
 import { compileSort } from '../lib/sort';
 import { ContactType } from '@prisma/client';
 import { CreateContactDto } from './dto/create-contact.dto';

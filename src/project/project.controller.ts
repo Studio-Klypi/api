@@ -14,7 +14,6 @@ import {
 import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
-import { AdminGuard } from '../common/guards/admin.guard';
 import { compileSort } from '../lib/sort';
 import { HasRoleGuard } from '../common/guards/has-role.guard';
 
