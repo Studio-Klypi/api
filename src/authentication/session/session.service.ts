@@ -30,6 +30,7 @@ export class SessionService {
       {
         httpOnly: true,
         secure: process.env.ENVIRONMENT !== 'development',
+        domain: process.env.BACKOFFICE_SESSION_COOKIE_DOMAIN,
         sameSite: 'lax',
         maxAge: 1000 * 60 * 60 * (data.keep ? 24 * 14 : 2),
       },
