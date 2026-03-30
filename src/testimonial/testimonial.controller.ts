@@ -17,6 +17,7 @@ import type { Nullable } from '../types/primitives';
 import { UserEntity } from '../authentication/user/entities/user.entity';
 import { UserRole } from '@prisma/client';
 import { HasRoleGuard } from '../common/guards/has-role.guard';
+import { IsAdmin } from '../common/decorators/is-admin.decorator';
 
 @Controller('testimonials')
 export class TestimonialController {
@@ -25,6 +26,7 @@ export class TestimonialController {
   @Get()
   findAll(
     @GetUser() me: Nullable<UserEntity>,
+    @IsAdmin() admin: boolean,
     @Query('sort') sort?: string,
     @Query('search') search?: string,
     @Query('page', new ParseIntPipe({ optional: true })) page?: number,
@@ -35,7 +37,7 @@ export class TestimonialController {
       search,
       page,
       offset,
-      !!me,
+      !!me || admin,
     );
   }
 
