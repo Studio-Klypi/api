@@ -1,5 +1,5 @@
 import { join } from 'path';
-import { Module } from '@nestjs/common';
+import { MiddlewareConsumer, Module, NestModule } from '@nestjs/common';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ProjectModule } from './project/project.module';
@@ -10,6 +10,7 @@ import { MailerModule } from '@nestjs-modules/mailer';
 import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handlebars.adapter';
 import { UserModule } from './authentication/user/user.module';
 import { SessionModule } from './authentication/session/session.module';
+import { UserMiddleware } from './common/middlewares/user.middleware';
 
 @Module({
   imports: [
@@ -52,4 +53,8 @@ import { SessionModule } from './authentication/session/session.module';
   controllers: [AppController],
   providers: [AppService],
 })
-export class AppModule {}
+export class AppModule implements NestModule {
+  configure(consumer: MiddlewareConsumer) {
+    consumer.apply(UserMiddleware).forRoutes('*');
+  }
+}
