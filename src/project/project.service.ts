@@ -56,6 +56,17 @@ export class ProjectService {
       throw new NotFoundException();
     }
   }
+  async findOneById(id: number) {
+    try {
+      return await this.db.project.findUniqueOrThrow({
+        where: {
+          id,
+        },
+      });
+    } catch {
+      throw new NotFoundException();
+    }
+  }
 
   async create(payload: CreateProjectDto) {
     const slug = payload.title.toLowerCase().replace(/ /g, '-');

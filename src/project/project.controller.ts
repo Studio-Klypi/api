@@ -10,12 +10,15 @@ import {
   ParseIntPipe,
   UseGuards,
   Query,
+  Res,
 } from '@nestjs/common';
+import type { Response } from 'express';
 import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { compileSort } from '../lib/sort';
 import { HasRoleGuard } from '../common/guards/has-role.guard';
+import { sendJsonDownload } from '../lib/json-download';
 
 @Controller('projects')
 export class ProjectController {
@@ -99,5 +102,12 @@ export class ProjectController {
   @UseGuards(HasRoleGuard('superadmin', 'admin'))
   delete(@Param('id', ParseIntPipe) id: number) {
     return this.projectService.delete(id);
+  }
+
+  @Get(':id/export')
+  @UseGuards(HasRoleGuard('superadmin', 'admin'))
+  async export(@Param('id', ParseIntPipe) id: number, @Res() res: Response) {
+    const project = await this.projectService.findOneById(id);
+    sendJsonDownload(res, project, project.slug);
   }
 }
