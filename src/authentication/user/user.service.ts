@@ -131,13 +131,6 @@ export class UserService {
       });
       console.log('MAIL RESULT', JSON.stringify(result, null, 2));
 
-      const testResult = await this.mailer.sendMail({
-        to: user.email,
-        subject: 'Test simple',
-        text: 'Ceci est un test sans template.',
-      });
-      console.log('TEST MAIL RESULT', JSON.stringify(testResult, null, 2));
-
       return new UserEntity(user);
     } catch (e) {
       console.error(e);
