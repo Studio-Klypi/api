@@ -12,7 +12,7 @@ import { hash, verify } from 'argon2';
 import type { Prisma } from '@prisma/client';
 import { generatePassword } from '../../lib/generate';
 import { UserEntity } from './entities/user.entity';
-import { MailerService } from '@nestjs-modules/mailer';
+import { MailerService } from '../../common/mailer/mailer.service';
 import { Nullable } from '../../types/primitives';
 
 @Injectable()

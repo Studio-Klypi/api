@@ -4,7 +4,7 @@ import type { Prisma, ContactType } from '@prisma/client';
 import { CreateContactDto } from './dto/create-contact.dto';
 import { ContactEntity } from './entities/contact.entity';
 import { ReplyDto } from './dto/reply.dto';
-import { MailerService } from '@nestjs-modules/mailer';
+import { MailerService } from '../common/mailer/mailer.service';
 
 @Injectable()
 export class ContactService {
