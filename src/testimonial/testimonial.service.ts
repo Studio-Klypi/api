@@ -3,7 +3,7 @@ import { DatabaseService } from '../common/database/database.service';
 import { TestimonialEntity } from './entities/testimonial.entity';
 import { CreateTestimonialDto } from './dto/create-testimonial.dto';
 import { type Prisma } from '@prisma/client';
-import { MailerService } from '../common/mailer/mailer.service';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class TestimonialService {
@@ -61,7 +61,6 @@ export class TestimonialService {
         to: payload.email,
         subject: 'Merci pour votre témoignage',
         template: 'testimonial-confirmation',
-        text: `Bonjour ${payload.firstName},\n\nMerci pour votre témoignage ! Nous l'avons bien reçu et il sera examiné par notre équipe.\n\nL'équipe Studio Klypi`,
         context: {
           firstName: payload.firstName,
           lastName: payload.lastName,
