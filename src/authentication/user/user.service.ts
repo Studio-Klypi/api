@@ -117,7 +117,7 @@ export class UserService {
         },
       });
 
-      await this.mailer.sendMail({
+      const result = await this.mailer.sendMail({
         to: user.email,
         subject: 'Mot de passe mis à jour',
         template: 'reset-password',
@@ -131,6 +131,7 @@ export class UserService {
           year: new Date().getFullYear(),
         },
       });
+      console.log('MAIL RESULT', JSON.stringify(result, null, 2));
 
       return new UserEntity(user);
     } catch (e) {
