@@ -4,7 +4,7 @@ import type { Prisma, ContactType } from '@prisma/client';
 import { CreateContactDto } from './dto/create-contact.dto';
 import { ContactEntity } from './entities/contact.entity';
 import { ReplyDto } from './dto/reply.dto';
-import { MailerService } from '../common/mailer/mailer.service';
+import { MailerService } from '@nestjs-modules/mailer';
 
 @Injectable()
 export class ContactService {
@@ -65,7 +65,6 @@ export class ContactService {
         to: payload.email,
         subject: 'Nous avons bien recu votre message',
         template: 'contact-confirmation',
-        text: `Bonjour ${payload.firstName},\n\nNous avons bien reçu votre message concernant "${payload.subject}".\n\nNotre équipe reviendra vers vous dans les plus brefs délais.\n\nL'équipe Studio Klypi`,
         context: {
           firstName: payload.firstName,
           subject: payload.subject,
@@ -95,7 +94,6 @@ export class ContactService {
       subject: `Re: ${message.subject}`,
       replyTo: process.env.MAILER_REPLY_TO,
       template: 'reply-message',
-      text: `Bonjour ${message.firstName},\n\n${payload.message}\n\nL'équipe Studio Klypi`,
       context: {
         firstName: message.firstName,
         message: payload.message,
