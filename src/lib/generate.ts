@@ -3,19 +3,22 @@ import { Listed } from '../types/primitives';
 const LOWERCASE = 'abcdefghijklmnopqrstuvwxyz';
 const UPPERCASE = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
 const NUMBERS = '0123456789';
+const SPECIAL = '!@#$%^&*()_+-=[]{}|;:,.<>?';
 
 const PASSWORD_LENGTH = 16;
 const STRING_LENGTH = 16;
 
-export const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d).{8,}$/;
+export const PASSWORD_REGEX =
+  /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{}|;:,.<>?]).{8,}$/;
 
 export function generatePassword(): string {
-  const allChars = LOWERCASE + UPPERCASE + NUMBERS;
+  const allChars = LOWERCASE + UPPERCASE + NUMBERS + SPECIAL;
 
   const mandatory = [
     LOWERCASE[Math.floor(Math.random() * LOWERCASE.length)],
     UPPERCASE[Math.floor(Math.random() * UPPERCASE.length)],
     NUMBERS[Math.floor(Math.random() * NUMBERS.length)],
+    SPECIAL[Math.floor(Math.random() * SPECIAL.length)],
   ];
 
   for (let i = mandatory.length; i < PASSWORD_LENGTH; i++) {
