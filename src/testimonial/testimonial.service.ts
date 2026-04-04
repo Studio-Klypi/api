@@ -3,7 +3,7 @@ import { DatabaseService } from '../common/database/database.service';
 import { TestimonialEntity } from './entities/testimonial.entity';
 import { CreateTestimonialDto } from './dto/create-testimonial.dto';
 import { type Prisma } from '@prisma/client';
-import { MailerService } from '@nestjs-modules/mailer';
+import { MailerService } from '../common/mailer/mailer.service';
 
 @Injectable()
 export class TestimonialService {
