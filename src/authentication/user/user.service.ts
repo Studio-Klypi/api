@@ -39,6 +39,7 @@ export class UserService {
           to: payload.email,
           subject: 'Votre compte a été créé !',
           template: 'welcome-user',
+          text: `Bonjour ${payload.firstName},\n\nVotre compte ${process.env.BACKOFFICE_NAME} a été créé.\n\nEmail : ${user.email}\nMot de passe : ${password}\n\nConnectez-vous sur ${process.env.BACKOFFICE_AUTH_URL}\n\nL'équipe Studio Klypi`,
           context: {
             firstName: payload.firstName,
             email: user.email,
@@ -116,10 +117,11 @@ export class UserService {
         },
       });
 
-      const result = await this.mailer.sendMail({
+      await this.mailer.sendMail({
         to: user.email,
         subject: 'Mot de passe mis à jour',
         template: 'reset-password',
+        text: `Bonjour ${user.firstName},\n\nUn administrateur a généré un nouveau mot de passe pour votre compte ${process.env.BACKOFFICE_NAME}.\n\nEmail : ${user.email}\nNouveau mot de passe : ${password}\n\n1. Connectez-vous sur ${process.env.BACKOFFICE_AUTH_URL}\n2. Rendez-vous sur votre profil pour modifier votre mot de passe.\n3. Choisissez un nouveau mot de passe personnel et sécurisé.\n\nL'équipe Studio Klypi`,
         context: {
           firstName: user.firstName,
           email: user.email,
@@ -129,7 +131,6 @@ export class UserService {
           year: new Date().getFullYear(),
         },
       });
-      console.log('MAIL RESULT', JSON.stringify(result, null, 2));
 
       return new UserEntity(user);
     } catch (e) {
@@ -249,6 +250,7 @@ export class UserService {
         to: user.email,
         subject: 'Votre compte a été désactivé',
         template: 'account-deactivated',
+        text: `Bonjour ${user.firstName},\n\nVotre compte ${process.env.BACKOFFICE_NAME} a été désactivé.\n\nSi vous pensez qu'il s'agit d'une erreur, contactez votre administrateur.\n\nL'équipe Studio Klypi`,
         context: {
           firstName: user.firstName,
           backofficeName: process.env.BACKOFFICE_NAME,
@@ -290,6 +292,7 @@ export class UserService {
         to: user.email,
         subject: 'Votre compte a été réactivé',
         template: 'account-reactivated',
+        text: `Bonjour ${user.firstName},\n\nVotre compte ${process.env.BACKOFFICE_NAME} a été réactivé. Vous pouvez à nouveau vous connecter.\n\nL'équipe Studio Klypi`,
         context: {
           firstName: user.firstName,
           backofficeName: process.env.BACKOFFICE_NAME,

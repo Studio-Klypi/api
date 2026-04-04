@@ -65,6 +65,7 @@ export class ContactService {
         to: payload.email,
         subject: 'Nous avons bien recu votre message',
         template: 'contact-confirmation',
+        text: `Bonjour ${payload.firstName},\n\nNous avons bien reçu votre message concernant "${payload.subject}".\n\nNotre équipe reviendra vers vous dans les plus brefs délais.\n\nL'équipe Studio Klypi`,
         context: {
           firstName: payload.firstName,
           subject: payload.subject,
@@ -94,6 +95,7 @@ export class ContactService {
       subject: `Re: ${message.subject}`,
       replyTo: process.env.MAILER_REPLY_TO,
       template: 'reply-message',
+      text: `Bonjour ${message.firstName},\n\n${payload.message}\n\nL'équipe Studio Klypi`,
       context: {
         firstName: message.firstName,
         message: payload.message,
