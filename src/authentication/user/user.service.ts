@@ -140,6 +140,7 @@ export class UserService {
 
       return new UserEntity(user);
     } catch (e) {
+      console.error(e);
       const error = e as Prisma.PrismaClientKnownRequestError;
 
       switch (error.code) {
