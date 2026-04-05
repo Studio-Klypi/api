@@ -3,7 +3,7 @@ import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { DatabaseService } from '../common/database/database.service';
 import { ProjectEntity } from './entities/project.entity';
-import type { Prisma } from '@prisma/client';
+import { Prisma, ProjectStatus, ProjectVisibility } from '@prisma/client';
 
 @Injectable()
 export class ProjectService {
@@ -14,8 +14,15 @@ export class ProjectService {
     search?: string,
     page: number = 1,
     offset: number = 20,
+    admin?: boolean,
   ) {
     let where = {};
+    if (!admin)
+      where = {
+        ...where,
+        status: ProjectStatus.published,
+        visibility: ProjectVisibility.public,
+      };
     if (search && search.length > 0)
       where = {
         ...where,
