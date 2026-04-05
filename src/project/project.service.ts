@@ -49,13 +49,14 @@ export class ProjectService {
       },
     };
   }
-  async findOne(_slug: string) {
+  async findOne(_slug: string, admin?: boolean) {
     const [id, ...slug] = _slug.split('-');
     try {
       const project = await this.db.project.findUniqueOrThrow({
         where: {
           id: +id,
           slug: slug.join('-'),
+          ...(admin ? {} : { status: ProjectStatus.published }),
         },
       });
       return new ProjectEntity(project);

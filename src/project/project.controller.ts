@@ -45,8 +45,8 @@ export class ProjectController {
   }
 
   @Get(':slug')
-  recoverOne(@Param('slug') slug: string) {
-    return this.projectService.findOne(slug);
+  recoverOne(@Param('slug') slug: string, @GetUser() me: UserEntity) {
+    return this.projectService.findOne(slug, !!me);
   }
 
   @Post()
