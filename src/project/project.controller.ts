@@ -19,6 +19,9 @@ import { UpdateProjectDto } from './dto/update-project.dto';
 import { compileSort } from '../lib/sort';
 import { HasRoleGuard } from '../common/guards/has-role.guard';
 import { sendJsonDownload } from '../lib/json-download';
+import { GetUser } from '../common/decorators/get-user.decorator';
+import { type Nullable } from '../types/primitives';
+import { UserEntity } from '../authentication/user/entities/user.entity';
 
 @Controller('projects')
 export class ProjectController {
@@ -26,6 +29,7 @@ export class ProjectController {
 
   @Get()
   recoverList(
+    @GetUser() me: Nullable<UserEntity>,
     @Query('sort') sort?: string,
     @Query('search') search?: string,
     @Query('page', new ParseIntPipe({ optional: true })) page?: number,
@@ -36,6 +40,7 @@ export class ProjectController {
       search,
       page,
       offset,
+      !!me,
     );
   }
 
