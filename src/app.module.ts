@@ -23,6 +23,8 @@ import { UserMiddleware } from './common/middlewares/user.middleware';
           user: process.env.MAILER_USER,
           pass: process.env.MAILER_PASS,
         },
+        logger: process.env.ENVIRONMENT === 'development',
+        debug: process.env.ENVIRONMENT === 'development',
       },
       defaults: {
         from: `${process.env.MAILER_FROM_NAME} <${process.env.MAILER_FROM_EMAIL}>`,

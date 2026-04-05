@@ -34,22 +34,20 @@ export class UserService {
         },
       });
 
-      await this.mailer
-        .sendMail({
-          to: payload.email,
-          subject: 'Votre compte a été créé !',
-          template: 'welcome-user',
-          context: {
-            firstName: payload.firstName,
-            email: user.email,
-            password,
-            backofficeName: process.env.BACKOFFICE_NAME,
-            backofficeUrl: process.env.BACKOFFICE_URL,
-            backofficeAuthUrl: process.env.BACKOFFICE_AUTH_URL,
-            year: new Date().getFullYear(),
-          },
-        })
-        .catch();
+      await this.mailer.sendMail({
+        to: payload.email,
+        subject: 'Votre compte a été créé !',
+        template: 'welcome-user',
+        context: {
+          firstName: payload.firstName,
+          email: user.email,
+          password,
+          backofficeName: process.env.BACKOFFICE_NAME,
+          backofficeUrl: process.env.BACKOFFICE_URL,
+          backofficeAuthUrl: process.env.BACKOFFICE_AUTH_URL,
+          year: new Date().getFullYear(),
+        },
+      });
 
       return new UserEntity(user);
     } catch (e) {
@@ -116,21 +114,19 @@ export class UserService {
         },
       });
 
-      await this.mailer
-        .sendMail({
-          to: user.email,
-          subject: 'Mot de passe mis à jour',
-          template: 'reset-password',
-          context: {
-            firstName: user.firstName,
-            email: user.email,
-            password,
-            backofficeName: process.env.BACKOFFICE_NAME,
-            backofficeAuthUrl: process.env.BACKOFFICE_AUTH_URL,
-            year: new Date().getFullYear(),
-          },
-        })
-        .catch();
+      await this.mailer.sendMail({
+        to: user.email,
+        subject: 'Nouveau mot de passe disponible',
+        template: 'reset-password',
+        context: {
+          firstName: user.firstName,
+          email: user.email,
+          password,
+          backofficeName: process.env.BACKOFFICE_NAME,
+          backofficeAuthUrl: process.env.BACKOFFICE_AUTH_URL,
+          year: new Date().getFullYear(),
+        },
+      });
 
       return new UserEntity(user);
     } catch (e) {

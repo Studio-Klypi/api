@@ -60,19 +60,17 @@ export class ContactService {
     const contact = await this.db.contact.create({
       data: payload,
     });
-    await this.mailer
-      .sendMail({
-        to: payload.email,
-        subject: 'Nous avons bien recu votre message',
-        template: 'contact-confirmation',
-        context: {
-          firstName: payload.firstName,
-          subject: payload.subject,
-          message: payload.message,
-          year: new Date().getFullYear(),
-        },
-      })
-      .catch();
+    await this.mailer.sendMail({
+      to: payload.email,
+      subject: 'Nous avons bien recu votre message',
+      template: 'contact-confirmation',
+      context: {
+        firstName: payload.firstName,
+        subject: payload.subject,
+        message: payload.message,
+        year: new Date().getFullYear(),
+      },
+    });
     return admin ? contact : new ContactEntity(contact);
   }
 

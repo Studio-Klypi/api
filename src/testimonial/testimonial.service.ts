@@ -56,20 +56,18 @@ export class TestimonialService {
     const testimonial = await this.db.testimonial.create({
       data: payload,
     });
-    await this.mailer
-      .sendMail({
-        to: payload.email,
-        subject: 'Merci pour votre témoignage',
-        template: 'testimonial-confirmation',
-        context: {
-          firstName: payload.firstName,
-          lastName: payload.lastName,
-          role: payload.role,
-          text: payload.text,
-          year: new Date().getFullYear(),
-        },
-      })
-      .catch();
+    await this.mailer.sendMail({
+      to: payload.email,
+      subject: 'Merci pour votre témoignage',
+      template: 'testimonial-confirmation',
+      context: {
+        firstName: payload.firstName,
+        lastName: payload.lastName,
+        role: payload.role,
+        text: payload.text,
+        year: new Date().getFullYear(),
+      },
+    });
     return admin ? testimonial : new TestimonialEntity(testimonial);
   }
 
