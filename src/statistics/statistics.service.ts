@@ -120,16 +120,16 @@ export class StatisticsService {
         { slot: number; category: string; count: number }[]
       >(
         `SELECT slot, category, COUNT(*)::int AS count FROM (
-           SELECT EXTRACT(${extract} FROM "createdAt")::int AS slot, 'messages_received' AS category
+           SELECT EXTRACT(${extract} FROM "createdAt")::int AS slot, 'messagesReceived' AS category
            FROM contacts WHERE "createdAt" BETWEEN $1 AND $2
            UNION ALL
-           SELECT EXTRACT(${extract} FROM "processedAt")::int AS slot, 'messages_processed' AS category
+           SELECT EXTRACT(${extract} FROM "processedAt")::int AS slot, 'messagesProcessed' AS category
            FROM contacts WHERE "processedAt" BETWEEN $1 AND $2
            UNION ALL
-           SELECT EXTRACT(${extract} FROM "createdAt")::int AS slot, 'testimonials_received' AS category
+           SELECT EXTRACT(${extract} FROM "createdAt")::int AS slot, 'testimonialsReceived' AS category
            FROM testimonials WHERE "createdAt" BETWEEN $1 AND $2
            UNION ALL
-           SELECT EXTRACT(${extract} FROM "processedAt")::int AS slot, 'testimonials_processed' AS category
+           SELECT EXTRACT(${extract} FROM "processedAt")::int AS slot, 'testimonialsProcessed' AS category
            FROM testimonials WHERE "processedAt" BETWEEN $1 AND $2
          ) combined
          GROUP BY slot, category
@@ -149,10 +149,10 @@ export class StatisticsService {
     period: Period,
   ) {
     const categories = [
-      'messages_received',
-      'messages_processed',
-      'testimonials_received',
-      'testimonials_processed',
+      'messagesReceived',
+      'messagesProcessed',
+      'testimonialsReceived',
+      'testimonialsProcessed',
     ];
     const slotCount = SLOT_COUNTS[period];
     const startIndex = period === Period.TODAY ? 0 : 1;
