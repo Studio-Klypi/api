@@ -11,6 +11,7 @@ import { HandlebarsAdapter } from '@nestjs-modules/mailer/dist/adapters/handleba
 import { UserModule } from './authentication/user/user.module';
 import { SessionModule } from './authentication/session/session.module';
 import { UserMiddleware } from './common/middlewares/user.middleware';
+import { StatisticsModule } from './statistics/statistics.module';
 
 @Module({
   imports: [
@@ -51,6 +52,7 @@ import { UserMiddleware } from './common/middlewares/user.middleware';
     ContactModule,
     UserModule,
     SessionModule,
+    StatisticsModule,
   ],
   controllers: [AppController],
   providers: [AppService],
