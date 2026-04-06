@@ -58,7 +58,7 @@ export class UserController {
   }
 
   @Delete(':id/deactivate')
-  @UseGuards(HasRoleGuard('superadmin'))
+  @UseGuards(IsMeOrHasRoleGuard('superadmin'))
   deactivate(@Param('id', ParseIntPipe) id: number) {
     return this.service.deactivate(id);
   }
