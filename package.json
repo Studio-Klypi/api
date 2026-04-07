@@ -2,9 +2,8 @@
   "name": "api",
   "version": "1.0.0-beta",
   "description": "",
-  "author": "",
+  "author": "Studio Klypi",
   "private": true,
-  "license": "UNLICENSED",
   "scripts": {
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
