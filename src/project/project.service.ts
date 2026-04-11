@@ -1,13 +1,19 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
+import { createReadStream } from 'fs';
+import { extname } from 'path';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
 import { DatabaseService } from '../common/database/database.service';
+import { StorageService } from '../common/storage/storage.service';
 import { ProjectEntity } from './entities/project.entity';
 import { Prisma, ProjectStatus, ProjectVisibility } from '@prisma/client';
 
 @Injectable()
 export class ProjectService {
-  constructor(private readonly db: DatabaseService) {}
+  constructor(
+    private readonly db: DatabaseService,
+    private readonly storage: StorageService,
+  ) {}
 
   async findAll(
     sort: Prisma.ProjectOrderByWithRelationInput[],
@@ -111,6 +117,51 @@ export class ProjectService {
       },
     });
     return new ProjectEntity(project!);
+  }
+
+  async updateBanner(id: number, file: Express.Multer.File) {
+    const project = await this.findOneById(id);
+
+    if (project.banner) {
+      await this.storage.delete(project.banner);
+    }
+
+    const ext = extname(file.originalname) || '.jpg';
+    const filename = `${project.id}-banner${ext}`;
+    const relativePath = await this.storage.save(
+      'projects',
+      filename,
+      file.buffer,
+    );
+
+    const updated = await this.db.project.update({
+      where: { id },
+      data: { banner: relativePath },
+    });
+    return new ProjectEntity(updated);
+  }
+
+  async getBanner(id: number) {
+    const project = await this.findOneById(id);
+    if (!project.banner) throw new NotFoundException('No banner set');
+
+    const exists = await this.storage.exists(project.banner);
+    if (!exists) throw new NotFoundException('Banner file not found');
+
+    const absolutePath = this.storage.getAbsolutePath(project.banner);
+    const ext = extname(project.banner).toLowerCase();
+    const mimeTypes: Record<string, string> = {
+      '.jpg': 'image/jpeg',
+      '.jpeg': 'image/jpeg',
+      '.png': 'image/png',
+      '.webp': 'image/webp',
+      '.avif': 'image/avif',
+    };
+
+    return {
+      stream: createReadStream(absolutePath),
+      mimetype: mimeTypes[ext] || 'application/octet-stream',
+    };
   }
 
   private async exists(id: number): Promise<boolean> {

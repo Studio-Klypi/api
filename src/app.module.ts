@@ -12,6 +12,7 @@ import { UserModule } from './authentication/user/user.module';
 import { SessionModule } from './authentication/session/session.module';
 import { UserMiddleware } from './common/middlewares/user.middleware';
 import { StatisticsModule } from './statistics/statistics.module';
+import { StorageModule } from './common/storage/storage.module';
 
 @Module({
   imports: [
@@ -53,6 +54,7 @@ import { StatisticsModule } from './statistics/statistics.module';
     UserModule,
     SessionModule,
     StatisticsModule,
+    StorageModule,
   ],
   controllers: [AppController],
   providers: [AppService],
