@@ -9,10 +9,17 @@ import {
   Delete,
   ParseIntPipe,
   UseGuards,
+  UseInterceptors,
+  UploadedFile,
   Query,
   Res,
+  BadRequestException,
+  ForbiddenException,
+  NotFoundException,
+  Req,
 } from '@nestjs/common';
-import type { Response } from 'express';
+import type { Request, Response } from 'express';
+import { FileInterceptor } from '@nestjs/platform-express';
 import { ProjectService } from './project.service';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
@@ -107,6 +114,42 @@ export class ProjectController {
   @UseGuards(HasRoleGuard('superadmin', 'admin'))
   delete(@Param('id', ParseIntPipe) id: number) {
     return this.projectService.delete(id);
+  }
+
+  @Patch(':id/update-banner')
+  @UseGuards(HasRoleGuard('superadmin', 'admin'))
+  @UseInterceptors(FileInterceptor('file'))
+  async updateBanner(
+    @Param('id', ParseIntPipe) id: number,
+    @UploadedFile() file: Express.Multer.File,
+  ) {
+    if (!file) throw new BadRequestException('No file provided');
+
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/avif'];
+    if (!allowed.includes(file.mimetype))
+      throw new BadRequestException('File must be an image (jpeg, png, webp, avif)');
+
+    return this.projectService.updateBanner(id, file);
+  }
+
+  @Get(':id/banner')
+  async getBanner(
+    @Param('id', ParseIntPipe) id: number,
+    @Req() req: Request,
+    @Res() res: Response,
+  ) {
+    const origin = req.headers.origin || req.headers.referer || '';
+    const allowed =
+      !origin ||
+      /^https?:\/\/localhost(:\d+)?(\/|$)/.test(origin) ||
+      /^https?:\/\/([a-z0-9-]+\.)*studio-klypi\.com(\/|$)/.test(origin);
+
+    if (!allowed) throw new ForbiddenException('Origin not allowed');
+
+    const { stream, mimetype } = await this.projectService.getBanner(id);
+    res.setHeader('Content-Type', mimetype);
+    res.setHeader('Cache-Control', 'public, max-age=86400');
+    stream.pipe(res);
   }
 
   @Get(':id/export')
