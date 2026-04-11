@@ -149,6 +149,8 @@ export class ProjectController {
     const { stream, mimetype } = await this.projectService.getBanner(id);
     res.setHeader('Content-Type', mimetype);
     res.setHeader('Cache-Control', 'public, max-age=86400');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     stream.pipe(res);
   }
 
