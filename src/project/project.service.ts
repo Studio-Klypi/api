@@ -7,6 +7,7 @@ import { DatabaseService } from '../common/database/database.service';
 import { StorageService } from '../common/storage/storage.service';
 import { ProjectEntity } from './entities/project.entity';
 import { Prisma, ProjectStatus, ProjectVisibility } from '@prisma/client';
+import { generateSlug } from '../lib/slug';
 
 @Injectable()
 export class ProjectService {
@@ -83,7 +84,7 @@ export class ProjectService {
   }
 
   async create(payload: CreateProjectDto) {
-    const slug = payload.title.toLowerCase().replace(/ /g, '-');
+    const slug = generateSlug(payload.title);
     const project = await this.db.project.create({
       data: {
         slug,
