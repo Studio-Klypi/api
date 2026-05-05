@@ -108,3 +108,76 @@ model Contact {
 
   @@map("contacts")
 }
+
+// PRIVATE GALLERY \\
+enum GalleryStatus {
+  draft
+  selection
+  retouching
+  delivered
+  closed
+}
+
+enum ShootingType {
+  studio
+  outside
+  event
+}
+
+model Gallery {
+  id           Int           @id @default(autoincrement())
+  key          String        @unique @default(cuid())
+  slug         String
+  title        String
+  status       GalleryStatus @default(draft)
+  clientName   String
+  photoQuota   Int           @default(0)
+  shootingDate DateTime
+  shootingCity String?
+  shootingType ShootingType
+  deliveredAt  DateTime?
+  expiresAt    DateTime?
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  pictures  Picture[]
+  retouches Retouch[]
+
+  @@unique([id, slug])
+  @@map("galleries")
+}
+
+model Picture {
+  id           Int       @id @default(autoincrement())
+  galleryId    Int
+  storageKey   String
+  thumbnailKey String
+  filename     String
+  size         Int
+  order        Int
+  selected     Boolean
+  selectedAt   DateTime?
+  downloadedAt DateTime?
+  createdAt    DateTime  @default(now())
+
+  gallery Gallery @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+
+  retouches Retouch[]
+
+  @@map("pictures")
+}
+
+model Retouch {
+  id           Int      @id @default(autoincrement())
+  pictureId    Int
+  galleryId    Int
+  storageKey   String
+  thumbnailKey String
+  version      Int      @default(1)
+  createdAt    DateTime @default(now())
+
+  picture Picture @relation(fields: [pictureId], references: [id], onDelete: Cascade)
+  gallery Gallery @relation(fields: [galleryId], references: [id], onDelete: Cascade)
+
+  @@map("retouches")
+}
