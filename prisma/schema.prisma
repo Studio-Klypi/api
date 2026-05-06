@@ -131,6 +131,7 @@ model Gallery {
   title        String
   status       GalleryStatus @default(draft)
   clientName   String
+  clientEmails String[]
   photoQuota   Int           @default(0)
   shootingDate DateTime
   shootingCity String?
@@ -158,6 +159,7 @@ model Picture {
   selected     Boolean
   selectedAt   DateTime?
   downloadedAt DateTime?
+  retouchCount Int       @default(0)
   createdAt    DateTime  @default(now())
 
   gallery Gallery @relation(fields: [galleryId], references: [id], onDelete: Cascade)
