@@ -13,6 +13,7 @@ import { SessionModule } from './authentication/session/session.module';
 import { UserMiddleware } from './common/middlewares/user.middleware';
 import { StatisticsModule } from './statistics/statistics.module';
 import { StorageModule } from './common/storage/storage.module';
+import { PrivateGalleriesModule } from './private-galleries/private-galleries.module';
 
 @Module({
   imports: [
@@ -55,6 +56,7 @@ import { StorageModule } from './common/storage/storage.module';
     SessionModule,
     StatisticsModule,
     StorageModule,
+    PrivateGalleriesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
