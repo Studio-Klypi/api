@@ -14,7 +14,6 @@ import {
   UploadedFile,
   Res,
   Delete,
-  UnauthorizedException,
   HttpCode,
 } from '@nestjs/common';
 import type { Response } from 'express';

@@ -11,7 +11,9 @@ describe('PrivateGalleriesController', () => {
       providers: [PrivateGalleriesService],
     }).compile();
 
-    controller = module.get<PrivateGalleriesController>(PrivateGalleriesController);
+    controller = module.get<PrivateGalleriesController>(
+      PrivateGalleriesController,
+    );
   });
 
   it('should be defined', () => {
