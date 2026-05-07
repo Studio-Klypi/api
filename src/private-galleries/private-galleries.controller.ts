@@ -84,7 +84,6 @@ export class PrivateGalleriesController {
   }
 
   @Get(':slug')
-  @UseGuards()
   findOne(
     @GetUser() user: Nullable<UserEntity>,
     @Param('slug') slug: string,
@@ -151,6 +150,7 @@ export class PrivateGalleriesController {
 
   @Post(':id/send')
   @HttpCode(202)
+  @UseGuards(AdminOrAuthGuard)
   send(
     @GetUser() user: Nullable<UserEntity>,
     @Param('id', ParseIntPipe) id: number,
@@ -159,11 +159,13 @@ export class PrivateGalleriesController {
   }
 
   @Put(':id/save')
+  @UseGuards(HasRoleGuard('superadmin', 'admin'))
   save(
+    @GetUser() user: Nullable<UserEntity>,
     @Param('id', ParseIntPipe) id: number,
     @Body() body: UpdatePrivateGalleryDto,
   ) {
-    return this.service.update(id, body);
+    return this.service.update(user, id, body);
   }
 
   @Delete(':id')
