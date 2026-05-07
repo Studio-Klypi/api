@@ -2,6 +2,7 @@ import { ShootingType } from '@prisma/client';
 import {
   ArrayMinSize,
   IsArray,
+  IsBoolean,
   IsDateString,
   IsEmail,
   IsEnum,
@@ -45,4 +46,12 @@ export class CreatePrivateGalleryDto {
   @IsEnum(ShootingType)
   @IsNotEmpty()
   shootingType: ShootingType;
+
+  @IsOptional()
+  @IsBoolean()
+  chatEnabled?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  canDownloadRaws?: boolean;
 }
