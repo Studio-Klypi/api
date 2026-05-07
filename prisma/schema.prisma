@@ -125,21 +125,23 @@ enum ShootingType {
 }
 
 model Gallery {
-  id           Int           @id @default(autoincrement())
-  key          String        @unique @default(cuid())
-  slug         String
-  title        String
-  status       GalleryStatus @default(draft)
-  clientName   String
-  clientEmails String[]
-  photoQuota   Int           @default(0)
-  shootingDate DateTime
-  shootingCity String?
-  shootingType ShootingType
-  deliveredAt  DateTime?
-  expiresAt    DateTime?
-  createdAt    DateTime      @default(now())
-  updatedAt    DateTime      @updatedAt
+  id              Int           @id @default(autoincrement())
+  key             String        @unique @default(cuid())
+  slug            String
+  title           String
+  status          GalleryStatus @default(draft)
+  clientName      String
+  clientEmails    String[]
+  photoQuota      Int           @default(0)
+  shootingDate    DateTime
+  shootingCity    String?
+  shootingType    ShootingType
+  chatEnabled     Boolean       @default(false)
+  canDownloadRaws Boolean       @default(false)
+  deliveredAt     DateTime?
+  expiresAt       DateTime?
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
 
   pictures  Picture[]
   retouches Retouch[]
