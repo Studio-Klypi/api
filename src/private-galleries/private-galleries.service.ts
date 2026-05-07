@@ -11,7 +11,7 @@ import { UpdatePrivateGalleryDto } from './dto/update-private-gallery.dto';
 import { DatabaseService } from '../common/database/database.service';
 import { StorageService } from '../common/storage/storage.service';
 import { generateSlug } from '../lib/slug';
-import { GalleryStatus, Prisma } from '@prisma/client';
+import { Gallery, GalleryStatus, Prisma } from '@prisma/client';
 import { Listed, Nullable } from '../types/primitives';
 import { MailerService } from '@nestjs-modules/mailer';
 import { UserEntity } from '../authentication/user/entities/user.entity';
@@ -25,6 +25,15 @@ export class PrivateGalleriesService {
     private readonly mailer: MailerService,
     private readonly storage: StorageService,
   ) {}
+
+  private isActive(gallery: Gallery) {
+    const activeStatuses: Listed<GalleryStatus> = [
+      GalleryStatus.selection,
+      GalleryStatus.delivered,
+      GalleryStatus.retouching,
+    ];
+    return activeStatuses.includes(gallery.status);
+  }
 
   async findAll(
     sort?: Prisma.GalleryOrderByWithRelationInput[],
@@ -226,8 +235,19 @@ export class PrivateGalleriesService {
     });
   }
 
-  async update(id: number, payload: UpdatePrivateGalleryDto) {
-    return this.db.gallery.update({
+  async update(
+    user: Nullable<UserEntity>,
+    id: number,
+    payload: UpdatePrivateGalleryDto,
+  ) {
+    const oldGallery = await this.db.gallery.findUnique({
+      where: {
+        id,
+      },
+    });
+    if (!oldGallery) throw new NotFoundException('Gallery not found.');
+
+    const newGallery = await this.db.gallery.update({
       where: {
         id,
       },
@@ -240,6 +260,32 @@ export class PrivateGalleriesService {
           : {}),
       },
     });
+
+    if (oldGallery?.slug !== newGallery.slug && this.isActive(newGallery))
+      await this.mailer.sendMail({
+        to: newGallery.clientEmails,
+        bcc: user?.email ?? process.env.MAILER_REPLY_TO!,
+        subject: 'Le nom de votre galerie a changé !',
+        template: 'gallery-slug-changed',
+        context: {
+          clientName: newGallery.clientName,
+          galleryTitle: oldGallery?.title ?? newGallery.title,
+          galleryUrl: process.env
+            .PRIVATE_GALLERY_URL_TEMPLATE!.replace(
+              '{id}',
+              newGallery.id.toString(),
+            )
+            .replace('{slug}', newGallery.slug)
+            .replace('{key}', newGallery.key),
+          expiresAt: newGallery.expiresAt
+            ? formatDate(newGallery.expiresAt, 'eeee d MMMM yyyy à HH:mm', {
+                locale: fr,
+              })
+            : null,
+        },
+      });
+
+    return newGallery;
   }
 
   async deleteRetouch(galleryId: number, pictureId: number, retouchId: number) {
