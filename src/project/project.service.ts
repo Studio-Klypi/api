@@ -1,5 +1,4 @@
 import { Injectable, NotFoundException } from '@nestjs/common';
-import { createReadStream } from 'fs';
 import { extname } from 'path';
 import { CreateProjectDto } from './dto/create-project.dto';
 import { UpdateProjectDto } from './dto/update-project.dto';
@@ -7,6 +6,7 @@ import { DatabaseService } from '../common/database/database.service';
 import { StorageService } from '../common/storage/storage.service';
 import { ProjectEntity } from './entities/project.entity';
 import { Prisma, ProjectStatus, ProjectVisibility } from '@prisma/client';
+import { generateSlug } from '../lib/slug';
 
 @Injectable()
 export class ProjectService {
@@ -83,7 +83,7 @@ export class ProjectService {
   }
 
   async create(payload: CreateProjectDto) {
-    const slug = payload.title.toLowerCase().replace(/ /g, '-');
+    const slug = generateSlug(payload.title);
     const project = await this.db.project.create({
       data: {
         slug,
@@ -132,6 +132,7 @@ export class ProjectService {
       'projects',
       filename,
       file.buffer,
+      file.mimetype,
     );
 
     const updated = await this.db.project.update({
@@ -148,7 +149,6 @@ export class ProjectService {
     const exists = await this.storage.exists(project.banner);
     if (!exists) throw new NotFoundException('Banner file not found');
 
-    const absolutePath = this.storage.getAbsolutePath(project.banner);
     const ext = extname(project.banner).toLowerCase();
     const mimeTypes: Record<string, string> = {
       '.jpg': 'image/jpeg',
@@ -159,7 +159,7 @@ export class ProjectService {
     };
 
     return {
-      stream: createReadStream(absolutePath),
+      stream: await this.storage.stream(project.banner),
       mimetype: mimeTypes[ext] || 'application/octet-stream',
     };
   }
