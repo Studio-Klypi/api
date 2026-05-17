@@ -21,9 +21,9 @@ export const HasRoleGuard = (...roles: UserRole[]): Type<CanActivate> => {
 
     constructor(private readonly authGuard: AuthGuard) {}
 
-    async canActivate(context: ExecutionContext): Promise<boolean> {
+    canActivate(context: ExecutionContext): boolean {
       try {
-        await this.authGuard.canActivate(context);
+        this.authGuard.canActivate(context);
       } catch {
         if (this.adminGuard.canActivate(context)) return true;
       }
