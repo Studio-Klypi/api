@@ -8,6 +8,7 @@ import {
 import { randomUUID } from 'crypto';
 import { extname, basename } from 'path';
 import sharp from 'sharp';
+// eslint-disable-next-line @typescript-eslint/no-require-imports
 import archiver = require('archiver');
 import { CreatePrivateGalleryDto } from './dto/create-private-gallery.dto';
 import { UpdatePrivateGalleryDto } from './dto/update-private-gallery.dto';
@@ -636,7 +637,9 @@ export class PrivateGalleriesService {
         const retouch = picture.retouches[0];
         const ext = extname(retouch.storageKey);
         const stream = await this.storage.stream(retouch.storageKey);
-        archive.append(stream, { name: `${stem}-retouch-v${retouch.version}${ext}` });
+        archive.append(stream, {
+          name: `${stem}-retouch-v${retouch.version}${ext}`,
+        });
       }
     }
 
