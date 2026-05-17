@@ -1,11 +1,14 @@
 import {
   BadRequestException,
+  ForbiddenException,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { randomUUID } from 'crypto';
+import { extname, basename } from 'path';
 import sharp from 'sharp';
+import archiver = require('archiver');
 import { CreatePrivateGalleryDto } from './dto/create-private-gallery.dto';
 import { UpdatePrivateGalleryDto } from './dto/update-private-gallery.dto';
 import { DatabaseService } from '../common/database/database.service';
@@ -17,22 +20,29 @@ import { MailerService } from '@nestjs-modules/mailer';
 import { UserEntity } from '../authentication/user/entities/user.entity';
 import { formatDate } from 'date-fns';
 import { fr } from 'date-fns/locale';
+import { SelectPictureDto } from './dto/select-picture.dto';
+import { DownloadZipItemDto } from './dto/download-zip.dto';
 
 @Injectable()
 export class PrivateGalleriesService {
+  static VALIDITY = 2_592_000_000 as const; // expires in 30d (by default)
+
   constructor(
     private readonly db: DatabaseService,
     private readonly mailer: MailerService,
     private readonly storage: StorageService,
   ) {}
 
-  private isActive(gallery: Gallery) {
-    const activeStatuses: Listed<GalleryStatus> = [
+  private get activeStatuses() {
+    return [
       GalleryStatus.selection,
       GalleryStatus.delivered,
       GalleryStatus.retouching,
-    ];
-    return activeStatuses.includes(gallery.status);
+    ] as Listed<GalleryStatus>;
+  }
+
+  private isActive(gallery: Gallery) {
+    return this.activeStatuses.includes(gallery.status);
   }
 
   async findAll(
@@ -90,6 +100,16 @@ export class PrivateGalleriesService {
                     GalleryStatus.delivered,
                   ],
                 },
+                OR: [
+                  {
+                    expiresAt: null,
+                  },
+                  {
+                    expiresAt: {
+                      gt: new Date(),
+                    },
+                  },
+                ],
               }
             : {}),
         },
@@ -259,6 +279,16 @@ export class PrivateGalleriesService {
             }
           : {}),
       },
+      include: {
+        pictures: {
+          include: {
+            retouches: true,
+          },
+          orderBy: {
+            order: 'asc',
+          },
+        },
+      },
     });
 
     if (oldGallery?.slug !== newGallery.slug && this.isActive(newGallery))
@@ -376,6 +406,473 @@ export class PrivateGalleriesService {
           throw new NotFoundException('Gallery not found');
         default:
           throw new InternalServerErrorException('Unable to send emails.');
+      }
+    }
+  }
+
+  async downloadPicture(
+    gallerySlug: string,
+    galleryKey: string,
+    pictureId: number,
+    admin: boolean,
+  ) {
+    const [id, ...slug] = gallerySlug.split('-');
+
+    try {
+      const gallery = await this.db.gallery.findUniqueOrThrow({
+        where: {
+          id: Number(id),
+          key: galleryKey,
+          slug: slug.join('-'),
+          ...(!admin
+            ? {
+                status: 'delivered',
+                expiresAt: {
+                  gt: new Date(),
+                },
+              }
+            : {}),
+        },
+      });
+      if (!admin && !gallery.canDownloadRaws)
+        throw new ForbiddenException(
+          'Downloading raws is not enabled for this gallery.',
+        );
+
+      const picture = await this.db.picture.findUniqueOrThrow({
+        where: {
+          id: pictureId,
+          galleryId: gallery.id,
+        },
+        include: {
+          retouches: {
+            orderBy: {
+              version: 'desc',
+            },
+            take: 1,
+          },
+        },
+      });
+
+      const target =
+        !admin && picture.retouches.length === 1
+          ? picture.retouches[0]
+          : picture;
+
+      const ext = extname(target.storageKey);
+      const stem = basename(picture.filename, extname(picture.filename));
+
+      if (!admin)
+        await this.db.picture.update({
+          where: {
+            id: picture.id,
+          },
+          data: {
+            downloadedAt: new Date(),
+          },
+        });
+
+      return {
+        stream: await this.storage.stream(target.storageKey),
+        filename: `${stem}${ext}`,
+        mimetype: this.mimetypeFromKey(target.storageKey),
+      };
+    } catch (e) {
+      if (e instanceof ForbiddenException || e instanceof NotFoundException)
+        throw e;
+      const error = e as Prisma.PrismaClientKnownRequestError;
+      if (error.code === 'P2025')
+        throw new NotFoundException('Gallery or picture not found.');
+      throw new InternalServerErrorException('Something went wrong');
+    }
+  }
+
+  private mimetypeFromKey(key: string): string {
+    const map: Record<string, string> = {
+      '.jpg': 'image/jpeg',
+      '.webp': 'image/webp',
+      '.gif': 'image/gif',
+    };
+    return map[extname(key)] ?? 'application/octet-stream';
+  }
+
+  async downloadRetouch(
+    gallerySlug: string,
+    galleryKey: string,
+    pictureId: number,
+    retouchId: number,
+    admin: boolean,
+  ) {
+    const [id, ...slug] = gallerySlug.split('-');
+
+    try {
+      const gallery = await this.db.gallery.findUniqueOrThrow({
+        where: {
+          id: Number(id),
+          key: galleryKey,
+          slug: slug.join('-'),
+          ...(!admin
+            ? {
+                status: 'delivered',
+                expiresAt: {
+                  gt: new Date(),
+                },
+              }
+            : {}),
+        },
+      });
+      const picture = await this.db.picture.findUniqueOrThrow({
+        where: {
+          id: pictureId,
+          galleryId: gallery.id,
+        },
+        include: {
+          retouches: {
+            orderBy: {
+              version: 'desc',
+            },
+          },
+        },
+      });
+      const retouch = await this.db.retouch.findUniqueOrThrow({
+        where: {
+          id: retouchId,
+          galleryId: gallery.id,
+          pictureId: picture.id,
+        },
+      });
+
+      const ext = extname(retouch.storageKey);
+      const stem = basename(picture.filename, extname(picture.filename));
+
+      return {
+        stream: await this.storage.stream(retouch.storageKey),
+        filename: `${stem}-retouch-v${retouch.version}${ext}`,
+        mimetype: this.mimetypeFromKey(retouch.storageKey),
+      };
+    } catch (e) {
+      console.error(e);
+
+      if (e instanceof ForbiddenException || e instanceof NotFoundException)
+        throw e;
+
+      const error = e as Prisma.PrismaClientKnownRequestError;
+      switch (error.code) {
+        case 'P2025':
+          throw new NotFoundException('Gallery, picture or retouch not found');
+        default:
+          throw new InternalServerErrorException('Something went wrong');
+      }
+    }
+  }
+
+  async downloadZip(
+    gallerySlug: string,
+    galleryKey: string,
+    items: DownloadZipItemDto[],
+    admin: boolean,
+  ) {
+    const [id, ...slugParts] = gallerySlug.split('-');
+
+    let gallery: Awaited<ReturnType<typeof this.db.gallery.findUniqueOrThrow>>;
+    try {
+      gallery = await this.db.gallery.findUniqueOrThrow({
+        where: {
+          id: Number(id),
+          key: galleryKey,
+          slug: slugParts.join('-'),
+          ...(!admin
+            ? {
+                status: 'delivered',
+                expiresAt: { gt: new Date() },
+              }
+            : {}),
+        },
+      });
+    } catch {
+      throw new NotFoundException('Gallery not found or not accessible.');
+    }
+
+    const hasOriginals = items.some((i) => i.type === 'original');
+    if (hasOriginals && !admin && !gallery.canDownloadRaws)
+      throw new ForbiddenException(
+        'Downloading originals is not enabled for this gallery.',
+      );
+
+    const pictureIds = [...new Set(items.map((i) => i.id))];
+    const pictures = await this.db.picture.findMany({
+      where: { id: { in: pictureIds }, galleryId: gallery.id },
+      include: {
+        retouches: {
+          orderBy: { version: 'desc' },
+          take: 1,
+        },
+      },
+    });
+
+    const pictureMap = new Map(pictures.map((p) => [p.id, p]));
+
+    for (const item of items) {
+      const picture = pictureMap.get(item.id);
+      if (!picture)
+        throw new NotFoundException(`Picture ${item.id} not found.`);
+      if (item.type === 'retouch' && !picture.retouches.length)
+        throw new BadRequestException(
+          `Picture ${item.id} has no retouch available.`,
+        );
+    }
+
+    const archive = archiver('zip', { zlib: { level: 6 } });
+
+    for (const item of items) {
+      const picture = pictureMap.get(item.id)!;
+      const stem = basename(picture.filename, extname(picture.filename));
+
+      if (item.type === 'original') {
+        const ext = extname(picture.storageKey);
+        const stream = await this.storage.stream(picture.storageKey);
+        archive.append(stream, { name: `${stem}${ext}` });
+      } else {
+        const retouch = picture.retouches[0];
+        const ext = extname(retouch.storageKey);
+        const stream = await this.storage.stream(retouch.storageKey);
+        archive.append(stream, { name: `${stem}-retouch-v${retouch.version}${ext}` });
+      }
+    }
+
+    archive.finalize();
+    return archive;
+  }
+
+  async bulkSelect(
+    id: number,
+    slug: string,
+    key: string,
+    body: SelectPictureDto,
+  ) {
+    try {
+      const gallery = await this.db.gallery.findUniqueOrThrow({
+        where: {
+          id,
+          slug,
+          key,
+          status: GalleryStatus.selection,
+        },
+      });
+      const newGallery = await this.db.gallery.update({
+        where: {
+          id,
+          slug,
+          key,
+        },
+        data: {
+          ...(body.ids.length === gallery.photoQuota
+            ? { status: GalleryStatus.retouching }
+            : {}),
+          pictures: {
+            updateMany: [
+              {
+                where: {
+                  id: {
+                    in: body.ids,
+                  },
+                },
+                data: {
+                  selected: true,
+                  selectedAt: new Date(),
+                },
+              },
+              {
+                where: {
+                  id: {
+                    notIn: body.ids,
+                  },
+                },
+                data: {
+                  selected: false,
+                  selectedAt: null,
+                },
+              },
+            ],
+          },
+        },
+        include: {
+          pictures: {
+            include: {
+              retouches: {
+                orderBy: {
+                  version: 'desc',
+                },
+              },
+            },
+            orderBy: {
+              order: 'asc',
+            },
+          },
+        },
+      });
+
+      if (newGallery.status === GalleryStatus.retouching)
+        await this.mailer.sendMail({
+          to: newGallery.clientEmails,
+          subject: 'Merci pour votre sélection !',
+          template: 'gallery-retouching',
+          context: {
+            clientName: newGallery.clientName,
+            galleryTitle: newGallery.title,
+            galleryUrl: process.env
+              .PRIVATE_GALLERY_URL_TEMPLATE!.replace(
+                '{id}',
+                newGallery.id.toString(),
+              )
+              .replace('{slug}', newGallery.slug)
+              .replace('{key}', newGallery.key),
+          },
+        });
+
+      return newGallery;
+    } catch (e) {
+      const error = e as Prisma.PrismaClientKnownRequestError;
+      switch (error.code) {
+        case 'P2025':
+          throw new NotFoundException('Gallery or picture not found');
+        default:
+          throw new InternalServerErrorException('Something went wrong');
+      }
+    }
+  }
+
+  async open(id: number) {
+    try {
+      const gallery = await this.db.gallery.update({
+        where: {
+          id,
+          status: {
+            in: [GalleryStatus.draft, GalleryStatus.closed],
+          },
+        },
+        data: {
+          status: GalleryStatus.selection,
+          expiresAt: null,
+        },
+      });
+
+      await this.mailer.sendMail({
+        to: gallery.clientEmails,
+        subject: 'Votre galerie photo est disponible !',
+        template: 'gallery-opened',
+        context: {
+          clientName: gallery.clientName,
+          galleryTitle: gallery.title,
+          galleryUrl: process.env
+            .PRIVATE_GALLERY_URL_TEMPLATE!.replace(
+              '{id}',
+              gallery.id.toString(),
+            )
+            .replace('{slug}', gallery.slug)
+            .replace('{key}', gallery.key),
+        },
+      });
+
+      return gallery;
+    } catch (e) {
+      const error = e as Prisma.PrismaClientKnownRequestError;
+      switch (error.code) {
+        case 'P2025':
+          throw new NotFoundException('Gallery not found');
+        default:
+          throw new InternalServerErrorException('Something went wrong');
+      }
+    }
+  }
+  async close(id: number) {
+    try {
+      const gallery = await this.db.gallery.update({
+        where: {
+          id,
+          status: {
+            notIn: [GalleryStatus.closed],
+          },
+          OR: [
+            {
+              expiresAt: null,
+            },
+            {
+              expiresAt: {
+                gt: new Date(),
+              },
+            },
+          ],
+        },
+        data: {
+          status: GalleryStatus.closed,
+        },
+      });
+
+      await this.mailer.sendMail({
+        to: gallery.clientEmails,
+        subject: 'Votre galerie photo est fermée !',
+        template: 'gallery-closed',
+        context: {
+          clientName: gallery.clientName,
+          galleryTitle: gallery.title,
+        },
+      });
+
+      return gallery;
+    } catch (e) {
+      const error = e as Prisma.PrismaClientKnownRequestError;
+      switch (error.code) {
+        case 'P2025':
+          throw new NotFoundException('Gallery not found');
+        default:
+          throw new InternalServerErrorException('Something went wrong');
+      }
+    }
+  }
+  async deliver(id: number) {
+    try {
+      const gallery = await this.db.gallery.update({
+        where: {
+          id,
+          status: GalleryStatus.retouching,
+        },
+        data: {
+          status: GalleryStatus.delivered,
+          expiresAt: new Date(Date.now() + PrivateGalleriesService.VALIDITY),
+        },
+      });
+
+      await this.mailer.sendMail({
+        to: gallery.clientEmails,
+        subject: 'Vos retouches photo ont été livrées !',
+        template: 'gallery-delivered',
+        context: {
+          clientName: gallery.clientName,
+          galleryTitle: gallery.title,
+          expiresAt: formatDate(
+            gallery.expiresAt!,
+            'eeee dd MMMM yyyy à HH:mm',
+            { locale: fr },
+          ),
+          galleryUrl: process.env
+            .PRIVATE_GALLERY_URL_TEMPLATE!.replace(
+              '{id}',
+              gallery.id.toString(),
+            )
+            .replace('{slug}', gallery.slug)
+            .replace('{key}', gallery.key),
+        },
+      });
+
+      return gallery;
+    } catch (e) {
+      const error = e as Prisma.PrismaClientKnownRequestError;
+      switch (error.code) {
+        case 'P2025':
+          throw new NotFoundException('Gallery not found');
+        default:
+          throw new InternalServerErrorException('Something went wrong');
       }
     }
   }

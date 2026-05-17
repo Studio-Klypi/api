@@ -15,6 +15,7 @@ import {
   Res,
   Delete,
   HttpCode,
+  Patch,
 } from '@nestjs/common';
 import type { Response } from 'express';
 import { FilesInterceptor, FileInterceptor } from '@nestjs/platform-express';
@@ -25,9 +26,13 @@ import { CreatePrivateGalleryDto } from './dto/create-private-gallery.dto';
 import { compileSort } from '../lib/sort';
 import { UpdatePrivateGalleryDto } from './dto/update-private-gallery.dto';
 import { GetUser } from '../common/decorators/get-user.decorator';
+import { IsAdmin } from '../common/decorators/is-admin.decorator';
 import type { Nullable } from '../types/primitives';
 import { UserEntity } from '../authentication/user/entities/user.entity';
 import { DeletePicturesDto } from './dto/delete-pictures.dto';
+import { PublicOrHasRoleGuard } from '../common/guards/public-or-has-role.guard';
+import { SelectPictureDto } from './dto/select-picture.dto';
+import { DownloadZipDto } from './dto/download-zip.dto';
 
 @Controller('private-galleries')
 export class PrivateGalleriesController {
@@ -42,6 +47,34 @@ export class PrivateGalleriesController {
     @Query('offset', new ParseIntPipe({ optional: true })) offset?: number,
   ) {
     return this.service.findAll(compileSort(sort ?? ''), search, page, offset);
+  }
+
+  @Get(':slug/pictures/:pictureId/retouches/:retouchId/download')
+  @UseGuards(PublicOrHasRoleGuard('superadmin', 'admin'))
+  async downloadRetouch(
+    @Param('slug') slug: string,
+    @Param('pictureId', ParseIntPipe) pictureId: number,
+    @Param('retouchId', ParseIntPipe) retouchId: number,
+    @GetUser() user: Nullable<UserEntity>,
+    @IsAdmin() isAdmin: boolean,
+    @Query('key') key: string,
+    @Res() res: Response,
+  ) {
+    const { stream, filename, mimetype } = await this.service.downloadRetouch(
+      slug,
+      key,
+      pictureId,
+      retouchId,
+      !!user || isAdmin,
+    );
+    res.setHeader('Content-Type', mimetype);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${filename}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
+    );
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    stream.pipe(res);
   }
 
   @Get(':slug/pictures/:pictureId/retouches/:retouchId')
@@ -63,6 +96,32 @@ export class PrivateGalleriesController {
     res.setHeader('Content-Type', 'image/jpeg');
     res.setHeader('Content-Disposition', 'inline');
     res.setHeader('Cache-Control', 'private, max-age=3600');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    stream.pipe(res);
+  }
+
+  @Get(':slug/pictures/:pictureId/download')
+  @UseGuards(PublicOrHasRoleGuard('superadmin', 'admin'))
+  async downloadPicture(
+    @Param('slug') slug: string,
+    @Param('pictureId', ParseIntPipe) pictureId: number,
+    @GetUser() user: Nullable<UserEntity>,
+    @IsAdmin() isAdmin: boolean,
+    @Query('key') key: string,
+    @Res() res: Response,
+  ) {
+    const { stream, filename, mimetype } = await this.service.downloadPicture(
+      slug,
+      key,
+      pictureId,
+      !!user || isAdmin,
+    );
+    res.setHeader('Content-Type', mimetype);
+    res.setHeader(
+      'Content-Disposition',
+      `attachment; filename="${filename}"; filename*=UTF-8''${encodeURIComponent(filename)}`,
+    );
+    res.setHeader('Cache-Control', 'no-store');
     res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
     stream.pipe(res);
   }
@@ -192,5 +251,58 @@ export class PrivateGalleriesController {
   ) {
     await this.service.bulkDelete(galleryId, body.ids);
     return;
+  }
+
+  @Post(':slug/pictures/download-zip')
+  @UseGuards(PublicOrHasRoleGuard('superadmin', 'admin'))
+  async downloadZip(
+    @Param('slug') slug: string,
+    @GetUser() user: Nullable<UserEntity>,
+    @IsAdmin() isAdmin: boolean,
+    @Query('key') key: string,
+    @Body() body: DownloadZipDto,
+    @Res() res: Response,
+  ) {
+    const archive = await this.service.downloadZip(
+      slug,
+      key,
+      body.pictures,
+      !!user || isAdmin,
+    );
+    res.setHeader('Content-Type', 'application/zip');
+    res.setHeader('Content-Disposition', 'attachment; filename="photos.zip"');
+    res.setHeader('Cache-Control', 'no-store');
+    res.setHeader('Cross-Origin-Resource-Policy', 'cross-origin');
+    archive.pipe(res);
+  }
+
+  @Patch(`:slug/pictures/select`)
+  async bulkSelectPictures(
+    @Query('key') key: string,
+    @Param('slug') slug: string,
+    @Body() body: SelectPictureDto,
+  ) {
+    if (!key) throw new BadRequestException('Gallery key is missing!');
+
+    const [id, ...rest] = slug.split('-');
+    return this.service.bulkSelect(Number(id), rest.join('-'), key, body);
+  }
+
+  @Patch(`:id/open`)
+  @UseGuards(HasRoleGuard('superadmin', 'admin'))
+  async open(@Param('id', ParseIntPipe) id: number) {
+    return this.service.open(id);
+  }
+
+  @Patch(`:id/close`)
+  @UseGuards(HasRoleGuard('superadmin', 'admin'))
+  async close(@Param('id', ParseIntPipe) id: number) {
+    return this.service.close(id);
+  }
+
+  @Patch(`:id/deliver`)
+  @UseGuards(HasRoleGuard('superadmin', 'admin'))
+  async deliver(@Param('id', ParseIntPipe) id: number) {
+    return this.service.deliver(id);
   }
 }
