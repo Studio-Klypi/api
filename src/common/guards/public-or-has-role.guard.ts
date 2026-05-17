@@ -1,21 +1,23 @@
 import {
   CanActivate,
   ExecutionContext,
+  ForbiddenException,
   Injectable,
   mixin,
   Type,
-  UnauthorizedException,
 } from '@nestjs/common';
 import { Request } from 'express';
+import { UserRole } from '@prisma/client';
 import { UserEntity } from '../../authentication/user/entities/user.entity';
 import { Nullable } from '../../types/primitives';
-import { AuthGuard } from './auth.guard';
-import { UserRole } from '@prisma/client';
 import { AdminGuard } from './admin.guard';
+import { AuthGuard } from './auth.guard';
 
-export const HasRoleGuard = (...roles: UserRole[]): Type<CanActivate> => {
+export const PublicOrHasRoleGuard = (
+  ...roles: UserRole[]
+): Type<CanActivate> => {
   @Injectable()
-  class HasRoleGuardMixin implements CanActivate {
+  class PublicOrHasRoleGuardMixin implements CanActivate {
     private readonly adminGuard = new AdminGuard();
 
     constructor(private readonly authGuard: AuthGuard) {}
@@ -24,21 +26,20 @@ export const HasRoleGuard = (...roles: UserRole[]): Type<CanActivate> => {
       try {
         this.authGuard.canActivate(context);
       } catch {
-        if (this.adminGuard.canActivate(context)) return true;
+        return true;
       }
 
       const request = context.switchToHttp().getRequest<Request>();
-      const user = (request.user || null) as Nullable<UserEntity>;
+      const user = (request.user ?? null) as Nullable<UserEntity>;
 
-      if (!user || !roles.includes(user.role)) {
-        throw new UnauthorizedException(
-          'Not authorized to perform this action.',
-        );
-      }
+      if (!user) return true;
+
+      if (!roles.includes(user.role))
+        throw new ForbiddenException('Not authorized to perform this action.');
 
       return true;
     }
   }
 
-  return mixin(HasRoleGuardMixin);
+  return mixin(PublicOrHasRoleGuardMixin);
 };

@@ -1,52 +1,77 @@
-import { Injectable, OnModuleInit } from '@nestjs/common';
-import { join } from 'path';
-import { mkdir, unlink, access } from 'fs/promises';
+import { Injectable } from '@nestjs/common';
+import {
+  S3Client,
+  PutObjectCommand,
+  DeleteObjectCommand,
+  HeadObjectCommand,
+  HeadBucketCommand,
+  GetObjectCommand,
+} from '@aws-sdk/client-s3';
+import { Readable } from 'stream';
 
 @Injectable()
-export class StorageService implements OnModuleInit {
-  private readonly baseDir = join(
-    process.cwd(),
-    process.env.UPLOADS_DIR || 'uploads',
-  );
+export class StorageService {
+  private readonly client = new S3Client({
+    region: process.env.AWS_REGION,
+    credentials: {
+      accessKeyId: process.env.AWS_BUCKET_ACCESS_KEY!,
+      secretAccessKey: process.env.AWS_BUCKET_SECRET_ACCESS_KEY!,
+    },
+  });
 
-  async onModuleInit() {
-    await mkdir(this.baseDir, { recursive: true });
+  private readonly bucket = process.env.AWS_S3_BUCKET!;
+
+  private key(directory: string, filename: string): string {
+    return `${directory}/${filename}`;
   }
 
   async save(
     directory: string,
     filename: string,
     buffer: Buffer,
+    mimetype = 'application/octet-stream',
   ): Promise<string> {
-    const dir = join(this.baseDir, directory);
-    await mkdir(dir, { recursive: true });
-
-    const filePath = join(dir, filename);
-    const { writeFile } = await import('fs/promises');
-    await writeFile(filePath, buffer);
-
-    return join(directory, filename);
+    const key = this.key(directory, filename);
+    await this.client.send(
+      new PutObjectCommand({
+        Bucket: this.bucket,
+        Key: key,
+        Body: buffer,
+        ContentType: mimetype,
+      }),
+    );
+    return key;
   }
 
-  async delete(relativePath: string): Promise<void> {
-    const filePath = join(this.baseDir, relativePath);
+  async delete(key: string): Promise<void> {
     try {
-      await unlink(filePath);
+      await this.client.send(
+        new DeleteObjectCommand({ Bucket: this.bucket, Key: key }),
+      );
     } catch {
-      // File already deleted or doesn't exist
+      // Object already deleted or doesn't exist
     }
   }
 
-  async exists(relativePath: string): Promise<boolean> {
+  async exists(key: string): Promise<boolean> {
     try {
-      await access(join(this.baseDir, relativePath));
+      await this.client.send(
+        new HeadObjectCommand({ Bucket: this.bucket, Key: key }),
+      );
       return true;
     } catch {
       return false;
     }
   }
 
-  getAbsolutePath(relativePath: string): string {
-    return join(this.baseDir, relativePath);
+  async stream(key: string): Promise<Readable> {
+    const response = await this.client.send(
+      new GetObjectCommand({ Bucket: this.bucket, Key: key }),
+    );
+    return response.Body as Readable;
+  }
+
+  async ping(): Promise<void> {
+    await this.client.send(new HeadBucketCommand({ Bucket: this.bucket }));
   }
 }

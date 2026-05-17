@@ -1,0 +1,78 @@
+{{#> layouts/main title="Vos retouches sont prêtes" preheader=(concat "Bonjour " clientName " ! Vos photos retouchées pour la galerie « " galleryTitle " » sont disponibles.")}}
+
+<!-- Badge -->
+<tr>
+  <td align="center" style="padding: 32px 40px 0 40px;">
+    <table role="presentation" cellpadding="0" cellspacing="0">
+      <tr>
+        <td style="background-color: #fdf2fc; border-radius: 20px; padding: 6px 16px;">
+          <span style="font-size: 13px; font-weight: 500; color: #E160D6;">Retouches disponibles</span>
+        </td>
+      </tr>
+    </table>
+  </td>
+</tr>
+
+<!-- Body -->
+<tr>
+  <td class="content-padding" style="padding: 24px 40px 32px 40px;">
+    <h2 style="margin: 0 0 16px 0; font-size: 20px; font-weight: 600; color: #0a0a0a; line-height: 1.3;">
+      Bonjour {{clientName}},
+    </h2>
+    <p style="margin: 0 0 28px 0; font-size: 15px; line-height: 1.7; color: #3f3f46;">
+      Le travail de retouche sur votre galerie <strong style="color: #0a0a0a;">{{galleryTitle}}</strong> est terminé. Vos photos sont maintenant prêtes à être téléchargées.
+    </p>
+
+    <!-- Gallery card -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color: #fafafa; border: 1px solid #e4e4e7; border-radius: 8px; overflow: hidden;">
+      <tr>
+        <td style="padding: 16px 20px; border-bottom: 1px solid #e4e4e7; background-color: #fdf2fc;">
+          <span style="font-size: 11px; font-weight: 600; color: #E160D6; text-transform: uppercase; letter-spacing: 0.8px;">Votre galerie</span>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding: 16px 20px 8px 20px;">
+          <span style="font-size: 12px; font-weight: 500; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.5px;">Titre</span>
+          <p style="margin: 4px 0 0 0; font-size: 14px; color: #27272a; line-height: 1.5; font-weight: 500;">{{galleryTitle}}</p>
+        </td>
+      </tr>
+      <tr>
+        <td style="padding: 12px 20px 20px 20px;">
+          <span style="font-size: 12px; font-weight: 500; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.5px;">Disponible jusqu'au</span>
+          <p style="margin: 4px 0 0 0; font-size: 14px; color: #27272a; line-height: 1.5; font-weight: 500;">{{expiresAt}}</p>
+        </td>
+      </tr>
+    </table>
+
+    <!-- CTA Button -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top: 28px;">
+      <tr>
+        <td align="center">
+          <a href="{{galleryUrl}}" target="_blank" style="display: inline-block; background-color: #E160D6; color: #ffffff; font-size: 15px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px; letter-spacing: -0.1px;">
+            Télécharger mes photos
+          </a>
+        </td>
+      </tr>
+    </table>
+
+    <!-- Expiration notice -->
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin-top: 24px; background-color: #fffbeb; border: 1px solid #fde68a; border-radius: 8px;">
+      <tr>
+        <td style="padding: 14px 20px;">
+          <p style="margin: 0; font-size: 13px; line-height: 1.6; color: #92400e;">
+            <strong>Attention :</strong> L'accès à votre galerie expirera le {{expiresAt}}. Pensez à télécharger vos photos avant cette date.
+          </p>
+        </td>
+      </tr>
+    </table>
+
+    <p style="margin: 28px 0 0 0; font-size: 15px; line-height: 1.7; color: #3f3f46;">
+      À très bientôt,
+    </p>
+    <p style="margin: 4px 0 0 0; font-size: 15px; font-weight: 600; color: #0a0a0a;">
+      L'équipe Studio Klypi
+    </p>
+  </td>
+</tr>
+
+{{/layouts/main}}
