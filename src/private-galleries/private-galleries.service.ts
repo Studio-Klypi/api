@@ -161,11 +161,11 @@ export class PrivateGalleriesService {
       return { buffer: file.buffer, mimetype: 'image/gif', ext: '.gif' };
 
     if (['image/png', 'image/webp', 'image/avif'].includes(file.mimetype)) {
-      const buffer = await sharp(file.buffer).webp({ quality: 90 }).toBuffer();
+      const buffer = await sharp(file.buffer).rotate().webp({ quality: 90 }).toBuffer();
       return { buffer, mimetype: 'image/webp', ext: '.webp' };
     }
 
-    const buffer = await sharp(file.buffer).jpeg({ quality: 90 }).toBuffer();
+    const buffer = await sharp(file.buffer).rotate().jpeg({ quality: 90 }).toBuffer();
     return { buffer, mimetype: 'image/jpeg', ext: '.jpg' };
   }
 
